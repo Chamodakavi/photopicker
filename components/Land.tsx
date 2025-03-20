@@ -1,74 +1,155 @@
 "use client";
 
-import { Button } from "@mui/material";
-import { useRef, useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
-const Land = () => {
+import styled from "styled-components";
+
+// Define styled components for styling
+const WebcamContainer = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+`;
+
+const WebcamVideo = styled.video`
+  width: 100%;
+  border-radius: 10px;
+  /* Apply specific styles only for mobile devices */
+  @media (max-width: 767px) {
+    height: 100vh;
+    object-fit: cover;
+    border-radius: 0;
+  }
+`;
+
+const PreviewImg = styled.img`
+  width: 100%;
+  border-radius: 10px;
+  @media (max-width: 767px) {
+    height: 100vh;
+    object-fit: cover;
+    border-radius: 0;
+  }
+`;
+
+const WebcamCanvas = styled.canvas`
+  display: none; /* Hide canvas by default */
+`;
+
+const WebcamButton = styled.button`
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  color: #333;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const WebcamCapture = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [captured, setCaptured] = useState(false);
+
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const startCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch (err) {
-        console.error("Camera access error:", err);
-        alert("Please allow camera access in browser settings.");
-      }
-    };
-
-    document.addEventListener("click", startCamera, { once: true });
-    return () => document.removeEventListener("click", startCamera);
+    startWebcam();
   }, []);
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-
-      const overlay = new Image();
-      overlay.src =
-        "https://static.vecteezy.com/system/resources/previews/022/442/213/large_2x/save-water-illustration-png.png";
-      overlay.onload = () => {
-        ctx.drawImage(overlay, 20, 20, 150, 150);
-        setCaptured(true);
-      };
+  const startWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user", // Request the front camera (selfie camera)
+        },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setMediaStream(stream);
+    } catch (error) {
+      console.error("Error accessing webcam", error);
     }
   };
 
-  const downloadPhoto = () => {
-    if (canvasRef.current) {
-      const link = document.createElement("a");
-      link.download = "captured_photo.png";
-      link.href = canvasRef.current.toDataURL("image/png");
-      link.click();
+  // Function to stop the webcam
+  const stopWebcam = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+      setMediaStream(null);
     }
+  };
+
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+
+      // Set canvas dimensions to match video stream
+      if (context && video.videoWidth && video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw video frame onto canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Get image data URL from canvas
+        const imageDataUrl = canvas.toDataURL("image/jpeg");
+
+        // Set the captured image
+        setCapturedImage(imageDataUrl);
+
+        // Stop the webcam
+        stopWebcam();
+
+        // You can do something with the captured image here, like save it to state or send it to a server
+      }
+    }
+  };
+
+  // Function to reset state (clear media stream and refs)
+  const resetState = () => {
+    stopWebcam(); // Stop the webcam if it's active
+    setCapturedImage(null); // Reset captured image
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4 p-4">
-      <video
-        ref={videoRef}
-        autoPlay
-        className="w-full max-w-md rounded shadow"
-      />
-      <Button onClick={capturePhoto}>Capture Photo</Button>
-      <canvas
-        ref={canvasRef}
-        className={`rounded shadow ${captured ? "block" : "hidden"}`}
-      />
-      {captured && <Button onClick={downloadPhoto}>Download Image</Button>}
-    </div>
+    <WebcamContainer>
+      {capturedImage ? (
+        <>
+          <PreviewImg src={capturedImage} className="captured-image" />
+          <WebcamButton onClick={resetState}>Reset</WebcamButton>
+        </>
+      ) : (
+        <>
+          <WebcamVideo ref={videoRef} autoPlay muted />
+          <WebcamCanvas ref={canvasRef} />
+          {!videoRef.current ? (
+            <>
+              <WebcamButton
+                onClick={startWebcam}
+                style={{ backgroundColor: "#333", color: "#fff" }}
+              >
+                Start Webcam
+              </WebcamButton>
+            </>
+          ) : (
+            <WebcamButton onClick={captureImage}>Capture Image</WebcamButton>
+          )}
+        </>
+      )}
+    </WebcamContainer>
   );
 };
 
-export default Land;
+export default WebcamCapture;
