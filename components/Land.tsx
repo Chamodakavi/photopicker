@@ -23,22 +23,12 @@ const WebcamVideo = styled.video`
   border-radius: 12px;
   transform: scaleX(-1);
   object-fit: cover;
-
-  @media (max-width: 767px) {
-    height: 100vh;
-    border-radius: 0;
-  }
 `;
 
 const PreviewImg = styled.img`
   width: 100%;
   border-radius: 12px;
   object-fit: cover;
-
-  @media (max-width: 767px) {
-    height: 100vh;
-    border-radius: 0;
-  }
 `;
 
 const WebcamCanvas = styled.canvas`
@@ -59,13 +49,11 @@ const ButtonContainer = styled.div`
 
 interface IconButtonProps {
   color?: string;
-  textColor?: string;
   hoverColor?: string;
 }
 
 const IconButton = styled.button<IconButtonProps>`
   background-color: ${({ color }) => color || "#fff"};
-  color: ${({ textColor }) => textColor || "#fff"};
   border: none;
   border-radius: 50%;
   width: 55px;
@@ -73,7 +61,6 @@ const IconButton = styled.button<IconButtonProps>`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
@@ -93,6 +80,8 @@ const WebcamCapture = () => {
 
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+
+  const overlayImageSrc = "/water.webp";
 
   useEffect(() => {
     startWebcam();
@@ -119,7 +108,7 @@ const WebcamCapture = () => {
     }
   };
 
-  const captureImage = () => {
+  const captureImage = async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -129,11 +118,37 @@ const WebcamCapture = () => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
+        // Flip the image horizontally
         context.translate(canvas.width, 0);
         context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const imageDataUrl = canvas.toDataURL("image/jpeg");
+        // Load overlay image with crossOrigin
+        const overlayImg = new Image();
+        overlayImg.src = overlayImageSrc;
+        overlayImg.crossOrigin = "anonymous"; // ✅ Prevent tainting the canvas
+
+        await new Promise((resolve) => {
+          overlayImg.onload = resolve;
+        });
+
+        // Draw overlay
+        const overlayWidth = canvas.width * 0.5;
+        const overlayHeight =
+          overlayImg.height * (overlayWidth / overlayImg.width);
+        const overlayX = canvas.width / 2 - overlayWidth / 2;
+        const overlayY = canvas.height - overlayHeight - 20;
+
+        context.drawImage(
+          overlayImg,
+          overlayX,
+          overlayY,
+          overlayWidth,
+          overlayHeight
+        );
+
+        // Save final image
+        const imageDataUrl = canvas.toDataURL("image/jpeg"); // ✅ No tainting issue
         setCapturedImage(imageDataUrl);
         stopWebcam();
       }
@@ -141,9 +156,8 @@ const WebcamCapture = () => {
   };
 
   const resetState = () => {
-    stopWebcam(); // Stop the webcam if it's active
-    setCapturedImage(null); // Reset captured image
-    startWebcam(); // Restart the webcam
+    setCapturedImage(null);
+    startWebcam();
   };
 
   const saveImage = () => {
@@ -155,7 +169,7 @@ const WebcamCapture = () => {
       link.click();
       document.body.removeChild(link);
 
-      resetState(); // Reset state and restart the webcam
+      resetState();
     }
   };
 
@@ -165,18 +179,10 @@ const WebcamCapture = () => {
         <>
           <PreviewImg src={capturedImage} />
           <ButtonContainer>
-            <IconButton
-              onClick={resetState}
-              color="#FF4D4D"
-              hoverColor="#FF6B6B"
-            >
+            <IconButton onClick={resetState} color="#FF4D4D">
               <RefreshCw size={28} />
             </IconButton>
-            <IconButton
-              onClick={saveImage}
-              color="#4CAF50"
-              hoverColor="#66BB6A"
-            >
+            <IconButton onClick={saveImage} color="#4CAF50">
               <Download size={28} />
             </IconButton>
           </ButtonContainer>
@@ -186,11 +192,7 @@ const WebcamCapture = () => {
           <WebcamVideo ref={videoRef} autoPlay muted />
           <WebcamCanvas ref={canvasRef} />
           <ButtonContainer>
-            <IconButton
-              onClick={captureImage}
-              color="#007BFF"
-              hoverColor="#339DFF"
-            >
+            <IconButton onClick={captureImage} color="#007BFF">
               <Camera size={32} />
             </IconButton>
           </ButtonContainer>
