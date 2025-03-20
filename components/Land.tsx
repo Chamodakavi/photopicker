@@ -47,15 +47,9 @@ const ButtonContainer = styled.div`
   border-radius: 30px;
 `;
 
-interface IconButtonProps {
-  color?: string;
-  textColor?: string;
-  hoverColor?: string;
-}
-
-const IconButton = styled.button<IconButtonProps>`
-  background-color: ${({ color }) => color || "#fff"};
-  color: ${({ textColor }) => textColor || "#fff"};
+const IconButton = styled.button`
+  background-color: #007bff;
+  color: white;
   border: none;
   border-radius: 50%;
   width: 55px;
@@ -69,7 +63,7 @@ const IconButton = styled.button<IconButtonProps>`
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: ${({ hoverColor }) => hoverColor || "#f0f0f0"};
+    background-color: #339dff;
   }
 
   &:active {
@@ -87,9 +81,11 @@ const WebcamCapture = () => {
 
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const overlayImage = "/water.webp"; // Change this path to your overlay PNG
 
   useEffect(() => {
+    setIsClient(true);
     checkPermissionsAndStart();
   }, []);
 
@@ -113,19 +109,25 @@ const WebcamCapture = () => {
       console.error("Error checking permissions", error);
     }
   };
-
   const startWebcam = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-      });
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.mediaDevices?.getUserMedia
+    ) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+        });
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setMediaStream(stream);
+      } catch (error) {
+        console.error("Error accessing webcam", error);
       }
-      setMediaStream(stream);
-    } catch (error) {
-      console.error("Error accessing webcam", error);
+    } else {
+      console.error("navigator.mediaDevices.getUserMedia is not available");
     }
   };
 
@@ -152,12 +154,7 @@ const WebcamCapture = () => {
       context.scale(-1, 1);
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Immediately set image preview
-      const imageDataUrl = canvas.toDataURL("image/jpeg");
-      setCapturedImage(imageDataUrl);
-      stopWebcam();
-
-      // Load overlay image
+      // Load and draw overlay image
       const overlay = new Image();
       overlay.src = overlayImage;
       overlay.onload = () => {
@@ -168,7 +165,14 @@ const WebcamCapture = () => {
           120,
           80
         );
-        setCapturedImage(canvas.toDataURL("image/jpeg"));
+
+        // Ensure the updated image is saved
+        const imageDataUrl = canvas.toDataURL("image/jpeg");
+        setCapturedImage(imageDataUrl);
+      };
+
+      overlay.onerror = () => {
+        console.error("Failed to load overlay image.");
       };
     }
   };
@@ -195,14 +199,52 @@ const WebcamCapture = () => {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && canvasRef.current) {
       const reader = new FileReader();
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+
       reader.onload = () => {
-        setCapturedImage(reader.result as string);
+        const uploadedImage = new Image();
+        uploadedImage.src = reader.result as string;
+
+        uploadedImage.onload = () => {
+          if (!context) return;
+
+          // Set canvas dimensions to match the uploaded image
+          canvas.width = uploadedImage.width;
+          canvas.height = uploadedImage.height;
+
+          // Draw the uploaded image on the canvas
+          context.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+
+          // Load and draw the overlay image
+          const overlay = new Image();
+          overlay.src = overlayImage;
+          overlay.onload = () => {
+            context.drawImage(
+              overlay,
+              canvas.width - 150,
+              canvas.height - 100,
+              120,
+              80
+            );
+
+            // Save the modified image with overlay
+            setCapturedImage(canvas.toDataURL("image/jpeg"));
+          };
+
+          overlay.onerror = () => {
+            console.error("Failed to load overlay image.");
+          };
+        };
       };
+
       reader.readAsDataURL(file);
     }
   };
+
+  if (!isClient) return null; // Prevents Next.js hydration errors
 
   return (
     <WebcamContainer>
@@ -210,18 +252,10 @@ const WebcamCapture = () => {
         <>
           <PreviewImg src={capturedImage} />
           <ButtonContainer>
-            <IconButton
-              onClick={resetState}
-              color="#FF4D4D"
-              hoverColor="#FF6B6B"
-            >
+            <IconButton onClick={resetState} color="#FF4D4D">
               <RefreshCw size={28} />
             </IconButton>
-            <IconButton
-              onClick={saveImage}
-              color="#4CAF50"
-              hoverColor="#66BB6A"
-            >
+            <IconButton onClick={saveImage} color="#4CAF50">
               <Download size={28} />
             </IconButton>
           </ButtonContainer>
@@ -231,18 +265,10 @@ const WebcamCapture = () => {
           <WebcamVideo ref={videoRef} autoPlay muted />
           <WebcamCanvas ref={canvasRef} />
           <ButtonContainer>
-            <IconButton
-              onClick={captureImage}
-              color="#007BFF"
-              hoverColor="#339DFF"
-            >
+            <IconButton onClick={captureImage} color="#007BFF">
               <Camera size={32} />
             </IconButton>
-            <IconButton
-              onClick={openCameraSettings}
-              color="#FFA500"
-              hoverColor="#FFC107"
-            >
+            <IconButton onClick={openCameraSettings} color="#FFA500">
               🔧
             </IconButton>
             <label>
@@ -251,7 +277,7 @@ const WebcamCapture = () => {
                 accept="image/*"
                 onChange={handleFileUpload}
               />
-              <IconButton as="span" color="#6A1B9A" hoverColor="#8E24AA">
+              <IconButton as="span" color="#6A1B9A">
                 <Upload size={28} />
               </IconButton>
             </label>
