@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@mui/material";
 import { useRef, useState, useEffect } from "react";
 
