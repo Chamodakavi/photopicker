@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-
 import styled from "styled-components";
 
 // Define styled components for styling
@@ -15,6 +14,8 @@ const WebcamContainer = styled.div`
 const WebcamVideo = styled.video`
   width: 100%;
   border-radius: 10px;
+  transform: scaleX(-1); /* Fixes inverted camera */
+
   /* Apply specific styles only for mobile devices */
   @media (max-width: 767px) {
     height: 100vh;
@@ -37,11 +38,14 @@ const WebcamCanvas = styled.canvas`
   display: none; /* Hide canvas by default */
 `;
 
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
 const WebcamButton = styled.button`
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
   background-color: #fff;
   color: #333;
   border: none;
@@ -50,6 +54,10 @@ const WebcamButton = styled.button`
   font-size: 16px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
 `;
 
 const WebcamCapture = () => {
@@ -100,6 +108,10 @@ const WebcamCapture = () => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
+        // Flip the image before capturing
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1); // Mirrors the image
+
         // Draw video frame onto canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -111,8 +123,6 @@ const WebcamCapture = () => {
 
         // Stop the webcam
         stopWebcam();
-
-        // You can do something with the captured image here, like save it to state or send it to a server
       }
     }
   };
@@ -123,26 +133,39 @@ const WebcamCapture = () => {
     setCapturedImage(null); // Reset captured image
   };
 
+  // Function to save/download the image
+  const saveImage = () => {
+    if (capturedImage) {
+      const link = document.createElement("a");
+      link.href = capturedImage;
+      link.download = "captured_image.jpg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <WebcamContainer>
       {capturedImage ? (
         <>
           <PreviewImg src={capturedImage} className="captured-image" />
-          <WebcamButton onClick={resetState}>Reset</WebcamButton>
+          <ButtonContainer>
+            <WebcamButton onClick={resetState}>Reset</WebcamButton>
+            <WebcamButton onClick={saveImage}>Save</WebcamButton>
+          </ButtonContainer>
         </>
       ) : (
         <>
           <WebcamVideo ref={videoRef} autoPlay muted />
           <WebcamCanvas ref={canvasRef} />
           {!videoRef.current ? (
-            <>
-              <WebcamButton
-                onClick={startWebcam}
-                style={{ backgroundColor: "#333", color: "#fff" }}
-              >
-                Start Webcam
-              </WebcamButton>
-            </>
+            <WebcamButton
+              onClick={startWebcam}
+              style={{ backgroundColor: "#333", color: "#fff" }}
+            >
+              Start Webcam
+            </WebcamButton>
           ) : (
             <WebcamButton onClick={captureImage}>Capture Image</WebcamButton>
           )}
