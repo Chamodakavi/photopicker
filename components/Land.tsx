@@ -87,7 +87,7 @@ const WebcamCapture = () => {
 
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const overlayImage = "/overlay.png"; // Change this path to your overlay PNG
+  const overlayImage = "/water.webp"; // Change this path to your overlay PNG
 
   useEffect(() => {
     checkPermissionsAndStart();
