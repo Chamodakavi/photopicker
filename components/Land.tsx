@@ -9,12 +9,20 @@ const Land = () => {
   const [captured, setCaptured] = useState(false);
 
   useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         if (videoRef.current) videoRef.current.srcObject = stream;
-      })
-      .catch(console.error);
+      } catch (err) {
+        console.error("Camera access error:", err);
+        alert("Please allow camera access in browser settings.");
+      }
+    };
+
+    document.addEventListener("click", startCamera, { once: true });
+    return () => document.removeEventListener("click", startCamera);
   }, []);
 
   const capturePhoto = () => {
@@ -29,7 +37,7 @@ const Land = () => {
 
       const overlay = new Image();
       overlay.src =
-        "https://static.vecteezy.com/system/resources/previews/022/442/213/large_2x/save-water-illustration-png.png"; // Update with correct path
+        "https://static.vecteezy.com/system/resources/previews/022/442/213/large_2x/save-water-illustration-png.png";
       overlay.onload = () => {
         ctx.drawImage(overlay, 20, 20, 150, 150);
         setCaptured(true);
