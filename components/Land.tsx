@@ -2,61 +2,88 @@
 
 import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
+import { Camera, RefreshCw, Download } from "lucide-react";
 
-// Define styled components for styling
+// Styled components
 const WebcamContainer = styled.div`
   position: relative;
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 `;
 
 const WebcamVideo = styled.video`
   width: 100%;
-  border-radius: 10px;
-  transform: scaleX(-1); /* Fixes inverted camera */
+  border-radius: 12px;
+  transform: scaleX(-1);
+  object-fit: cover;
 
-  /* Apply specific styles only for mobile devices */
   @media (max-width: 767px) {
     height: 100vh;
-    object-fit: cover;
     border-radius: 0;
   }
 `;
 
 const PreviewImg = styled.img`
   width: 100%;
-  border-radius: 10px;
+  border-radius: 12px;
+  object-fit: cover;
+
   @media (max-width: 767px) {
     height: 100vh;
-    object-fit: cover;
     border-radius: 0;
   }
 `;
 
 const WebcamCanvas = styled.canvas`
-  display: none; /* Hide canvas by default */
+  display: none;
 `;
 
 const ButtonContainer = styled.div`
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 30px;
 `;
 
-const WebcamButton = styled.button`
-  background-color: #fff;
-  color: #333;
+interface IconButtonProps {
+  color?: string;
+  textColor?: string;
+  hoverColor?: string;
+}
+
+const IconButton = styled.button<IconButtonProps>`
+  background-color: ${({ color }) => color || "#fff"};
+  color: ${({ textColor }) => textColor || "#fff"};
   border: none;
-  border-radius: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
 
   &:hover {
-    background-color: #f0f0f0;
+    background-color: ${({ hoverColor }) => hoverColor || "#f0f0f0"};
+  }
+
+  &:active {
+    transform: scale(0.9);
   }
 `;
 
@@ -74,9 +101,7 @@ const WebcamCapture = () => {
   const startWebcam = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user", // Request the front camera (selfie camera)
-        },
+        video: { facingMode: "user" },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -87,12 +112,9 @@ const WebcamCapture = () => {
     }
   };
 
-  // Function to stop the webcam
   const stopWebcam = () => {
     if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => {
-        track.stop();
-      });
+      mediaStream.getTracks().forEach((track) => track.stop());
       setMediaStream(null);
     }
   };
@@ -103,37 +125,27 @@ const WebcamCapture = () => {
       const canvas = canvasRef.current;
       const context = canvas.getContext("2d");
 
-      // Set canvas dimensions to match video stream
       if (context && video.videoWidth && video.videoHeight) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
-        // Flip the image before capturing
         context.translate(canvas.width, 0);
-        context.scale(-1, 1); // Mirrors the image
-
-        // Draw video frame onto canvas
+        context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Get image data URL from canvas
         const imageDataUrl = canvas.toDataURL("image/jpeg");
-
-        // Set the captured image
         setCapturedImage(imageDataUrl);
-
-        // Stop the webcam
         stopWebcam();
       }
     }
   };
 
-  // Function to reset state (clear media stream and refs)
   const resetState = () => {
     stopWebcam(); // Stop the webcam if it's active
     setCapturedImage(null); // Reset captured image
+    startWebcam(); // Restart the webcam
   };
 
-  // Function to save/download the image
   const saveImage = () => {
     if (capturedImage) {
       const link = document.createElement("a");
@@ -142,6 +154,8 @@ const WebcamCapture = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      resetState(); // Reset state and restart the webcam
     }
   };
 
@@ -149,26 +163,37 @@ const WebcamCapture = () => {
     <WebcamContainer>
       {capturedImage ? (
         <>
-          <PreviewImg src={capturedImage} className="captured-image" />
+          <PreviewImg src={capturedImage} />
           <ButtonContainer>
-            <WebcamButton onClick={resetState}>Reset</WebcamButton>
-            <WebcamButton onClick={saveImage}>Save</WebcamButton>
+            <IconButton
+              onClick={resetState}
+              color="#FF4D4D"
+              hoverColor="#FF6B6B"
+            >
+              <RefreshCw size={28} />
+            </IconButton>
+            <IconButton
+              onClick={saveImage}
+              color="#4CAF50"
+              hoverColor="#66BB6A"
+            >
+              <Download size={28} />
+            </IconButton>
           </ButtonContainer>
         </>
       ) : (
         <>
           <WebcamVideo ref={videoRef} autoPlay muted />
           <WebcamCanvas ref={canvasRef} />
-          {!videoRef.current ? (
-            <WebcamButton
-              onClick={startWebcam}
-              style={{ backgroundColor: "#333", color: "#fff" }}
+          <ButtonContainer>
+            <IconButton
+              onClick={captureImage}
+              color="#007BFF"
+              hoverColor="#339DFF"
             >
-              Start Webcam
-            </WebcamButton>
-          ) : (
-            <WebcamButton onClick={captureImage}>Capture Image</WebcamButton>
-          )}
+              <Camera size={32} />
+            </IconButton>
+          </ButtonContainer>
         </>
       )}
     </WebcamContainer>
