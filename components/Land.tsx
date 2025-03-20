@@ -28,7 +28,8 @@ const Land = () => {
       ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
       const overlay = new Image();
-      overlay.src = "/save_water.png"; // Update with correct path
+      overlay.src =
+        "https://static.vecteezy.com/system/resources/previews/022/442/213/large_2x/save-water-illustration-png.png"; // Update with correct path
       overlay.onload = () => {
         ctx.drawImage(overlay, 20, 20, 150, 150);
         setCaptured(true);
