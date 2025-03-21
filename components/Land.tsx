@@ -82,7 +82,7 @@ const WebcamCapture = () => {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const overlayImage = "/water.webp"; // Change this path to your overlay PNG
+  const overlayImage = "/art.png"; // Change this path to your overlay PNG
 
   useEffect(() => {
     setIsClient(true);
@@ -98,8 +98,9 @@ const WebcamCapture = () => {
       if (permissions.state === "denied") {
         alert(
           "Camera access is blocked. Enable it in browser settings:\n\n" +
-            "1️⃣ Go to Settings > Apps > Browser > Permissions > Camera > Allow\n" +
-            "2️⃣ Reload this page and try again."
+            "1️⃣ Go to Browser-Settings > Site settings > Camera > allow photopicker-three.vercel.app\n" +
+            "2️⃣ Reload this page and try again.\n" +
+            "Else Upload your Photo and Download it."
         );
         return;
       }
@@ -154,16 +155,20 @@ const WebcamCapture = () => {
       context.scale(-1, 1);
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Load and draw overlay image
+      // Load and draw overlay image (Winmart logo)
       const overlay = new Image();
       overlay.src = overlayImage;
+
       overlay.onload = () => {
+        const logoHeight = canvas.height * 0.1; // 10% of the canvas height
+        const logoWidth = canvas.width; // Full width
+
         context.drawImage(
           overlay,
-          canvas.width - 150,
-          canvas.height - 100,
-          120,
-          80
+          0,
+          canvas.height - logoHeight,
+          logoWidth,
+          logoHeight
         );
 
         // Ensure the updated image is saved
@@ -211,23 +216,55 @@ const WebcamCapture = () => {
         uploadedImage.onload = () => {
           if (!context) return;
 
-          // Set canvas dimensions to match the uploaded image
-          canvas.width = uploadedImage.width;
-          canvas.height = uploadedImage.height;
+          const imgWidth = uploadedImage.width;
+          const imgHeight = uploadedImage.height;
+
+          // Determine if image is portrait or landscape
+          const isPortrait = imgHeight > imgWidth;
+
+          // Maintain correct aspect ratio and prevent distortion
+          const aspectRatio = imgWidth / imgHeight;
+          const maxCanvasWidth = 1000;
+          const maxCanvasHeight = 1000;
+
+          let finalWidth = imgWidth;
+          let finalHeight = imgHeight;
+
+          if (imgWidth > maxCanvasWidth || imgHeight > maxCanvasHeight) {
+            if (aspectRatio > 1) {
+              // Landscape Image
+              finalWidth = maxCanvasWidth;
+              finalHeight = maxCanvasWidth / aspectRatio;
+            } else {
+              // Portrait Image
+              finalHeight = maxCanvasHeight;
+              finalWidth = maxCanvasHeight * aspectRatio;
+            }
+          }
+
+          canvas.width = finalWidth;
+          canvas.height = finalHeight;
 
           // Draw the uploaded image on the canvas
-          context.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+          context.drawImage(uploadedImage, 0, 0, finalWidth, finalHeight);
 
-          // Load and draw the overlay image
+          // Load and draw the overlay image (Winmart logo)
           const overlay = new Image();
           overlay.src = overlayImage;
+
           overlay.onload = () => {
+            // Set overlay height based on image orientation
+            const logoHeight = isPortrait
+              ? finalHeight * 0.4
+              : finalHeight * 0.8;
+            const logoWidth = finalWidth; // Full width
+
             context.drawImage(
               overlay,
-              canvas.width - 150,
-              canvas.height - 100,
-              120,
-              80
+              0,
+              finalHeight - logoHeight,
+              logoWidth,
+              logoHeight
             );
 
             // Save the modified image with overlay
