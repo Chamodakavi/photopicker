@@ -147,20 +147,35 @@ const WebcamCapture = () => {
     const context = canvas.getContext("2d");
 
     if (context && video.videoWidth && video.videoHeight) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      const imgWidth = video.videoWidth;
+      const imgHeight = video.videoHeight;
+
+      // Determine if image is portrait or landscape
+      const isPortrait = imgHeight > imgWidth;
+
+      canvas.width = imgWidth;
+      canvas.height = imgHeight;
+
+      // Save the current context state before flipping
+      context.save();
 
       // Flip video horizontally
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+      // Restore context to prevent flipping the overlay
+      context.restore();
+
       // Load and draw overlay image (Winmart logo)
       const overlay = new Image();
       overlay.src = overlayImage;
 
       overlay.onload = () => {
-        const logoHeight = canvas.height * 0.1; // 10% of the canvas height
+        // Set overlay height based on image orientation
+        const logoHeight = isPortrait
+          ? canvas.height * 0.4
+          : canvas.height * 0.8;
         const logoWidth = canvas.width; // Full width
 
         context.drawImage(
