@@ -320,7 +320,6 @@ const WebcamCapture = () => {
       return;
     }
 
-    const fbPageId = "YOUR_PAGE_ID"; // Replace with the Facebook Page ID you want to tag
     const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
       cloudinaryUrl
     )}`;
