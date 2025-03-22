@@ -82,7 +82,7 @@ const WebcamCapture = () => {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const overlayImage = "/win.png"; // Change this path to your overlay PNG
+  const overlayImage = "/art.png"; // Change this path to your overlay PNG
 
   useEffect(() => {
     setIsClient(true);
@@ -147,50 +147,54 @@ const WebcamCapture = () => {
     const context = canvas.getContext("2d");
 
     if (context && video.videoWidth && video.videoHeight) {
-      const imgWidth = video.videoWidth;
-      const imgHeight = video.videoHeight;
+      const template = new Image();
+      template.src = overlayImage; // Your PNG template with logo at the bottom
 
-      // Determine if image is portrait or landscape
-      const isPortrait = imgHeight > imgWidth;
+      template.onload = () => {
+        if (!context) return;
 
-      canvas.width = imgWidth;
-      canvas.height = imgHeight;
+        const templateWidth = template.width;
+        const templateHeight = template.height;
 
-      // Save the current context state before flipping
-      context.save();
+        // Resize canvas to match the template
+        canvas.width = templateWidth;
+        canvas.height = templateHeight;
 
-      // Flip video horizontally
-      context.translate(canvas.width, 0);
-      context.scale(-1, 1);
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Define space for captured image (above the logo)
+        const availableHeight = templateHeight * 0.75; // Adjust based on template
+        const availableWidth = templateWidth;
 
-      // Restore context to prevent flipping the overlay
-      context.restore();
+        // Maintain aspect ratio of captured video frame
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        let imgWidth = availableWidth;
+        let imgHeight = imgWidth / aspectRatio;
 
-      // Load and draw overlay image (Winmart logo)
-      const overlay = new Image();
-      overlay.src = overlayImage;
+        if (imgHeight > availableHeight) {
+          imgHeight = availableHeight;
+          imgWidth = imgHeight * aspectRatio;
+        }
 
-      overlay.onload = () => {
-        // Set overlay height based on image orientation
-        const logoHeight = isPortrait ? canvas.height * 0.6 : canvas.height * 1;
-        const logoWidth = canvas.width; // Full width
+        // Position captured image inside the empty space
+        const imgX = (templateWidth - imgWidth) / 2;
+        const imgY = 0; // Start from top of template
 
-        context.drawImage(
-          overlay,
-          0,
-          canvas.height - logoHeight,
-          logoWidth,
-          logoHeight
-        );
+        // Flip video frame horizontally (mirror effect)
+        context.save();
+        context.translate(templateWidth, 0);
+        context.scale(-1, 1);
+        context.drawImage(video, -imgX - imgWidth, imgY, imgWidth, imgHeight);
+        context.restore();
 
-        // Ensure the updated image is saved
+        // Draw the template (Winmart logo at the bottom)
+        context.drawImage(template, 0, 0, templateWidth, templateHeight);
+
+        // Save final image
         const imageDataUrl = canvas.toDataURL("image/jpeg");
         setCapturedImage(imageDataUrl);
       };
 
-      overlay.onerror = () => {
-        console.error("Failed to load overlay image.");
+      template.onerror = () => {
+        console.error("Failed to load template image.");
       };
     }
   };
@@ -229,61 +233,49 @@ const WebcamCapture = () => {
         uploadedImage.onload = () => {
           if (!context) return;
 
-          const imgWidth = uploadedImage.width;
-          const imgHeight = uploadedImage.height;
+          const template = new Image();
+          template.src = overlayImage; // Your PNG template (Winmart logo at the bottom)
 
-          // Maintain correct aspect ratio and prevent distortion
-          const aspectRatio = imgWidth / imgHeight;
-          const maxCanvasWidth = 1000;
-          const maxCanvasHeight = 1000;
-
-          let finalWidth = imgWidth;
-          let finalHeight = imgHeight;
-
-          if (imgWidth > maxCanvasWidth || imgHeight > maxCanvasHeight) {
-            if (aspectRatio > 1) {
-              finalWidth = maxCanvasWidth;
-              finalHeight = maxCanvasWidth / aspectRatio;
-            } else {
-              finalHeight = maxCanvasHeight;
-              finalWidth = maxCanvasHeight * aspectRatio;
-            }
-          }
-
-          canvas.width = finalWidth;
-          canvas.height = finalHeight;
-
-          // Draw the uploaded image on the canvas
-          context.drawImage(uploadedImage, 0, 0, finalWidth, finalHeight);
-
-          // Load and draw the overlay image (Winmart logo)
-          const overlay = new Image();
-          overlay.src = overlayImage;
-
-          overlay.onload = () => {
+          template.onload = () => {
             if (!context) return;
 
-            // Set overlay width to full image width
-            const cusWidht = finalWidth - 1;
-            const logoWidth = cusWidht;
+            const templateWidth = template.width;
+            const templateHeight = template.height;
 
-            // *** Change this value to reduce overlay logo height ***
-            const logoHeight =
-              (overlay.height / overlay.width) * logoWidth * 0.5;
-            // Multiply by 0.6 (or adjust) to reduce height
+            // Resize canvas to match the template
+            canvas.width = templateWidth;
+            canvas.height = templateHeight;
 
-            // Position logo at the bottom
-            const logoX = 0;
-            const logoY = finalHeight - logoHeight;
+            // Define space for uploaded image (above the logo)
+            const availableHeight = templateHeight * 0.75; // Adjust based on your template
+            const availableWidth = templateWidth;
 
-            context.drawImage(overlay, logoX, logoY, logoWidth, logoHeight);
+            // Maintain aspect ratio of uploaded image
+            const aspectRatio = uploadedImage.width / uploadedImage.height;
+            let imgWidth = availableWidth;
+            let imgHeight = imgWidth / aspectRatio;
 
-            // Save the modified image with overlay
-            setCapturedImage(canvas.toDataURL("image/jpeg"));
+            if (imgHeight > availableHeight) {
+              imgHeight = availableHeight;
+              imgWidth = imgHeight * aspectRatio;
+            }
+
+            // Position uploaded image inside the empty space
+            const imgX = (templateWidth - imgWidth) / 2;
+            const imgY = 0; // Start from top of template
+
+            // Draw uploaded image inside the empty space
+            context.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
+
+            // Draw the template (Winmart logo at the bottom)
+            context.drawImage(template, 0, 0, templateWidth, templateHeight);
+
+            // Save final image
+            setCapturedImage(canvas.toDataURL("image/png"));
           };
 
-          overlay.onerror = () => {
-            console.error("Failed to load overlay image.");
+          template.onerror = () => {
+            console.error("Failed to load template image.");
           };
         };
       };
