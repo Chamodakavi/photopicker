@@ -10,11 +10,11 @@ export async function generateMetadata({ searchParams }: any): Promise<any> {
   const imageUrl = searchParams?.img || "";
 
   return {
-    title: "Check out this photo!",
-    description: "Photo shared from our app!",
+    title: "",
+    description: "!",
     openGraph: {
-      title: "Check out this photo!",
-      description: "Photo shared from our app!",
+      title: "",
+      description: "",
       images: imageUrl ? [{ url: imageUrl }] : [],
       url: `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
         imageUrl
