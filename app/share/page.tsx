@@ -8,26 +8,29 @@ type Props = any;
 // Ensure metadata is correctly generated on the server
 export async function generateMetadata({
   searchParams,
-}: Props): Promise<Metadata> {
+}: any): Promise<Metadata> {
   const imageUrl = searchParams?.img || "";
 
   return {
-    title: " ", // ✅ Empty space to minimize title
-    description: " ", // ✅ Empty space to minimize description
+    title: " ",
+    description: " ",
     openGraph: {
-      type: "website",
-      title: " ", // ✅ Empty title
-      description: " ", // ✅ Empty description
+      type: "website", // ✅ Required for proper rendering
+      title: " ",
+      description: " ",
       images: [
         {
           url: imageUrl,
-          width: 1200, // ✅ Proper Facebook dimensions
+          width: 1200,
           height: 630,
         },
       ],
       url: `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
         imageUrl
       )}`,
+    },
+    other: {
+      "fb:app_id": "1241610474056459", // ✅ Required for some Facebook previews
     },
   };
 }
