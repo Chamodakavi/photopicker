@@ -6,16 +6,25 @@ import { Metadata } from "next";
 type Props = any;
 
 // Ensure metadata is correctly generated on the server
-export async function generateMetadata({ searchParams }: any): Promise<any> {
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
   const imageUrl = searchParams?.img || "";
 
   return {
-    title: "",
-    description: "!",
+    title: " ", // ✅ Empty space to minimize title
+    description: " ", // ✅ Empty space to minimize description
     openGraph: {
-      title: "",
-      description: "",
-      images: imageUrl ? [{ url: imageUrl }] : [],
+      type: "website",
+      title: " ", // ✅ Empty title
+      description: " ", // ✅ Empty description
+      images: [
+        {
+          url: imageUrl,
+          width: 1200, // ✅ Proper Facebook dimensions
+          height: 630,
+        },
+      ],
       url: `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
         imageUrl
       )}`,
