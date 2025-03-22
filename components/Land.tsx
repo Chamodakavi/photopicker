@@ -218,10 +218,6 @@ const WebcamCapture = () => {
     }
   };
 
-  const openCameraSettings = () => {
-    window.location.href = "chrome://settings/content/camera";
-  };
-
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && canvasRef.current) {
@@ -310,9 +306,6 @@ const WebcamCapture = () => {
           <ButtonContainer>
             <IconButton onClick={captureImage} color="#007BFF">
               <Camera size={32} />
-            </IconButton>
-            <IconButton onClick={openCameraSettings} color="#FFA500">
-              🔧
             </IconButton>
             <label>
               <FileInput
