@@ -1,14 +1,15 @@
 import { Metadata } from "next";
 
-interface PageProps {
+// Correctly define Props type
+type Props = {
   searchParams: { img?: string };
-}
+};
 
-// 🏆 Fix: Properly define `PageProps` for searchParams
+// Ensure metadata is correctly generated on the server
 export async function generateMetadata({
   searchParams,
-}: PageProps): Promise<Metadata> {
-  const imageUrl = searchParams.img || "";
+}: Props): Promise<Metadata> {
+  const imageUrl = searchParams?.img || "";
 
   return {
     title: "Check out this photo!",
@@ -16,7 +17,7 @@ export async function generateMetadata({
     openGraph: {
       title: "Check out this photo!",
       description: "Photo shared from our app!",
-      images: imageUrl ? [imageUrl] : [],
+      images: imageUrl ? [{ url: imageUrl }] : [],
       url: `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
         imageUrl
       )}`,
@@ -24,8 +25,9 @@ export async function generateMetadata({
   };
 }
 
-export default function SharePage({ searchParams }: PageProps) {
-  const img = searchParams.img;
+// The main SharePage component
+export default function SharePage({ searchParams }: Props) {
+  const img = searchParams?.img;
 
   if (!img) {
     return <p>No image to share.</p>;
