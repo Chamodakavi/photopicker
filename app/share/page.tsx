@@ -1,48 +1,41 @@
-import Head from "next/head";
-import { useRouter } from "next/router";
+import { Metadata } from "next";
 
-import { GetServerSidePropsContext } from "next";
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { img } = context.query;
-
-  if (!img) {
-    return {
-      notFound: true, // Ensure a proper 404 response if no image is provided
-    };
-  }
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { img?: string };
+}): Promise<Metadata> {
+  const imageUrl = searchParams.img || "";
 
   return {
-    props: { img },
+    title: "Check out this photo!",
+    description: "Photo shared from our app!",
+    openGraph: {
+      title: "Check out this photo!",
+      description: "Photo shared from our app!",
+      images: imageUrl ? [imageUrl] : [],
+      url: `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
+        imageUrl
+      )}`,
+    },
   };
 }
 
-interface SharePageProps {
-  img: string;
-}
+export default function SharePage({
+  searchParams,
+}: {
+  searchParams: { img?: string };
+}) {
+  const img = searchParams.img;
 
-const SharePage = ({ img }: SharePageProps) => {
   if (!img) {
     return <p>No image to share.</p>;
   }
 
   return (
     <div>
-      <Head>
-        <title>Check out this photo!</title>
-        <meta property="og:title" content="Check out this photo!" />
-        <meta property="og:description" content="Photo shared from our app!" />
-        <meta property="og:image" content={img} />
-        <meta
-          property="og:url"
-          content={`https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
-            img
-          )}`}
-        />
-      </Head>
       <p>Sharing image...</p>
+      <img src={img} alt="Shared content" width="500" />
     </div>
   );
-};
-
-export default SharePage;
+}
