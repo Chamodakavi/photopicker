@@ -82,6 +82,8 @@ const WebcamCapture = () => {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [cloudinaryUrl, setCloudinaryUrl] = useState<string | null>(null);
+
   const overlayImage = "/art.png"; // Change this path to your overlay PNG
 
   useEffect(() => {
@@ -194,6 +196,7 @@ const WebcamCapture = () => {
         // Save the final image
         const imageDataUrl = canvas.toDataURL("image/jpeg");
         setCapturedImage(imageDataUrl);
+        uploadToCloudinary(imageDataUrl);
       };
 
       template.onerror = () => {
@@ -270,7 +273,9 @@ const WebcamCapture = () => {
             context.drawImage(template, 0, 0, templateWidth, templateHeight);
 
             // Save final image
+            const imageDataUrl = canvas.toDataURL("image/png");
             setCapturedImage(canvas.toDataURL("image/png"));
+            uploadToCloudinary(imageDataUrl);
           };
 
           template.onerror = () => {
@@ -281,6 +286,45 @@ const WebcamCapture = () => {
 
       reader.readAsDataURL(file);
     }
+  };
+
+  const uploadToCloudinary = async (imageDataUrl: string | Blob) => {
+    const cloudName = "drcnnul87";
+    const uploadPreset = "winmart";
+
+    try {
+      const formData = new FormData();
+      formData.append("file", imageDataUrl);
+      formData.append("upload_preset", uploadPreset);
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      console.log("Uploaded Image URL:", data.secure_url);
+      setCloudinaryUrl(data.secure_url);
+      alert(`Image uploaded successfully!\nURL: ${data.secure_url}`);
+    } catch (error) {
+      console.error("Error uploading to Cloudinary", error);
+    }
+  };
+  const shareOnFacebook = () => {
+    if (!cloudinaryUrl) {
+      alert("Upload an image first!");
+      return;
+    }
+
+    const fbPageId = "YOUR_PAGE_ID"; // Replace with the Facebook Page ID you want to tag
+    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      cloudinaryUrl
+    )}`;
+
+    window.open(fbShareUrl, "_blank");
   };
 
   if (!isClient) return null; // Prevents Next.js hydration errors
@@ -297,6 +341,9 @@ const WebcamCapture = () => {
             <IconButton onClick={saveImage} color="#4CAF50">
               <Download size={28} />
             </IconButton>
+            {cloudinaryUrl && (
+              <IconButton onClick={shareOnFacebook}>s</IconButton>
+            )}
           </ButtonContainer>
         </>
       ) : (
