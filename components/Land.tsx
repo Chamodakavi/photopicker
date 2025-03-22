@@ -232,9 +232,6 @@ const WebcamCapture = () => {
           const imgWidth = uploadedImage.width;
           const imgHeight = uploadedImage.height;
 
-          // Determine if image is portrait or landscape
-          const isPortrait = imgHeight > imgWidth;
-
           // Maintain correct aspect ratio and prevent distortion
           const aspectRatio = imgWidth / imgHeight;
           const maxCanvasWidth = 1000;
@@ -245,11 +242,9 @@ const WebcamCapture = () => {
 
           if (imgWidth > maxCanvasWidth || imgHeight > maxCanvasHeight) {
             if (aspectRatio > 1) {
-              // Landscape Image
               finalWidth = maxCanvasWidth;
               finalHeight = maxCanvasWidth / aspectRatio;
             } else {
-              // Portrait Image
               finalHeight = maxCanvasHeight;
               finalWidth = maxCanvasHeight * aspectRatio;
             }
@@ -266,17 +261,21 @@ const WebcamCapture = () => {
           overlay.src = overlayImage;
 
           overlay.onload = () => {
-            // Set overlay height based on image orientation
-            const logoHeight = isPortrait ? finalHeight * 0.6 : finalHeight * 1;
-            const logoWidth = finalWidth; // Full width
+            if (!context) return;
 
-            context.drawImage(
-              overlay,
-              0,
-              finalHeight - logoHeight,
-              logoWidth,
-              logoHeight
-            );
+            // Set overlay width to full image width
+            const logoWidth = finalWidth;
+
+            // *** Change this value to reduce overlay logo height ***
+            const logoHeight =
+              (overlay.height / overlay.width) * logoWidth * 0.5;
+            // Multiply by 0.6 (or adjust) to reduce height
+
+            // Position logo at the bottom
+            const logoX = 0;
+            const logoY = finalHeight - logoHeight;
+
+            context.drawImage(overlay, logoX, logoY, logoWidth, logoHeight);
 
             // Save the modified image with overlay
             setCapturedImage(canvas.toDataURL("image/jpeg"));
