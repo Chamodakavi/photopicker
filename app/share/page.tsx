@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 
+interface PageProps {
+  searchParams: { img?: string };
+}
+
+// 🏆 Fix: Properly define `PageProps` for searchParams
 export async function generateMetadata({
   searchParams,
-}: {
-  searchParams: { img?: string };
-}): Promise<Metadata> {
+}: PageProps): Promise<Metadata> {
   const imageUrl = searchParams.img || "";
 
   return {
@@ -21,11 +24,7 @@ export async function generateMetadata({
   };
 }
 
-export default function SharePage({
-  searchParams,
-}: {
-  searchParams: { img?: string };
-}) {
+export default function SharePage({ searchParams }: PageProps) {
   const img = searchParams.img;
 
   if (!img) {
