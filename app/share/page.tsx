@@ -3,14 +3,10 @@
 import { Metadata } from "next";
 
 // Correctly define Props type
-type Props = {
-  searchParams: { img?: string };
-};
+type Props = any;
 
 // Ensure metadata is correctly generated on the server
-export async function generateMetadata({
-  searchParams,
-}: Props): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: any): Promise<any> {
   const imageUrl = searchParams?.img || "";
 
   return {
@@ -25,6 +21,21 @@ export async function generateMetadata({
       )}`,
     },
   };
+}
+
+export default function SharePage({ searchParams }: any) {
+  const img = searchParams?.img;
+
+  if (!img) {
+    return <p>No image to share.</p>;
+  }
+
+  return (
+    <div>
+      <p>Sharing image...</p>
+      <img src={img} alt="Shared content" width="500" />
+    </div>
+  );
 }
 
 // The main SharePage component
