@@ -37,19 +37,3 @@ export default function SharePage({ searchParams }: any) {
     </div>
   );
 }
-
-// The main SharePage component
-export default function SharePage({ searchParams }: Props) {
-  const img = searchParams?.img;
-
-  if (!img) {
-    return <p>No image to share.</p>;
-  }
-
-  return (
-    <div>
-      <p>Sharing image...</p>
-      <img src={img} alt="Shared content" width="500" />
-    </div>
-  );
-}
