@@ -173,9 +173,7 @@ const WebcamCapture = () => {
 
       overlay.onload = () => {
         // Set overlay height based on image orientation
-        const logoHeight = isPortrait
-          ? canvas.height * 0.4
-          : canvas.height * 0.8;
+        const logoHeight = isPortrait ? canvas.height * 0.6 : canvas.height * 1;
         const logoWidth = canvas.width; // Full width
 
         context.drawImage(
@@ -269,9 +267,7 @@ const WebcamCapture = () => {
 
           overlay.onload = () => {
             // Set overlay height based on image orientation
-            const logoHeight = isPortrait
-              ? finalHeight * 0.4
-              : finalHeight * 0.8;
+            const logoHeight = isPortrait ? finalHeight * 0.6 : finalHeight * 1;
             const logoWidth = finalWidth; // Full width
 
             context.drawImage(
