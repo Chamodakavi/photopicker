@@ -264,7 +264,8 @@ const WebcamCapture = () => {
             if (!context) return;
 
             // Set overlay width to full image width
-            const logoWidth = finalWidth;
+            const cusWidht = finalWidth - 1;
+            const logoWidth = cusWidht;
 
             // *** Change this value to reduce overlay logo height ***
             const logoHeight =
