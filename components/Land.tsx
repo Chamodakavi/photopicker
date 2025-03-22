@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { Camera, RefreshCw, Download, Upload } from "lucide-react";
+import { Facebook } from "lucide-react";
 
 // Styled Components
 const WebcamContainer = styled.div`
@@ -342,7 +343,12 @@ const WebcamCapture = () => {
               <Download size={28} />
             </IconButton>
             {cloudinaryUrl && (
-              <IconButton onClick={shareOnFacebook}>s</IconButton>
+              <IconButton
+                onClick={shareOnFacebook}
+                style={{ backgroundColor: "#1877F2" }}
+              >
+                <Facebook size={28} color="white" />
+              </IconButton>
             )}
           </ButtonContainer>
         </>
