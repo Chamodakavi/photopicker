@@ -82,7 +82,7 @@ const WebcamCapture = () => {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const overlayImage = "/art.png"; // Change this path to your overlay PNG
+  const overlayImage = "/win.png"; // Change this path to your overlay PNG
 
   useEffect(() => {
     setIsClient(true);
