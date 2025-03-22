@@ -148,7 +148,7 @@ const WebcamCapture = () => {
 
     if (context && video.videoWidth && video.videoHeight) {
       const template = new Image();
-      template.src = overlayImage; // Your PNG template with logo at the bottom
+      template.src = overlayImage; // PNG template with logo at the bottom
 
       template.onload = () => {
         if (!context) return;
@@ -156,15 +156,15 @@ const WebcamCapture = () => {
         const templateWidth = template.width;
         const templateHeight = template.height;
 
-        // Resize canvas to match the template
+        // Resize canvas to match the template size
         canvas.width = templateWidth;
         canvas.height = templateHeight;
 
-        // Define space for captured image (above the logo)
-        const availableHeight = templateHeight * 0.75; // Adjust based on template
+        // Define available space for the captured image
+        const availableHeight = templateHeight * 0.75; // Space above the logo
         const availableWidth = templateWidth;
 
-        // Maintain aspect ratio of captured video frame
+        // Maintain aspect ratio
         const aspectRatio = video.videoWidth / video.videoHeight;
         let imgWidth = availableWidth;
         let imgHeight = imgWidth / aspectRatio;
@@ -174,21 +174,24 @@ const WebcamCapture = () => {
           imgWidth = imgHeight * aspectRatio;
         }
 
-        // Position captured image inside the empty space
+        // Center the image within the available space
         const imgX = (templateWidth - imgWidth) / 2;
-        const imgY = 0; // Start from top of template
+        const imgY = 0; // Start from the top of the template
 
-        // Flip video frame horizontally (mirror effect)
+        // Clear the canvas before drawing
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Flip and draw the captured video frame
         context.save();
-        context.translate(templateWidth, 0);
-        context.scale(-1, 1);
-        context.drawImage(video, -imgX - imgWidth, imgY, imgWidth, imgHeight);
+        context.translate(imgWidth, 0); // Move right by image width
+        context.scale(-1, 1); // Flip horizontally
+        context.drawImage(video, -imgX, imgY, imgWidth, imgHeight);
         context.restore();
 
-        // Draw the template (Winmart logo at the bottom)
+        // Draw the template (logo at bottom)
         context.drawImage(template, 0, 0, templateWidth, templateHeight);
 
-        // Save final image
+        // Save the final image
         const imageDataUrl = canvas.toDataURL("image/jpeg");
         setCapturedImage(imageDataUrl);
       };
