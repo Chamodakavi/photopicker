@@ -314,14 +314,19 @@ const WebcamCapture = () => {
       console.error("Error uploading to Cloudinary", error);
     }
   };
+
   const shareOnFacebook = () => {
     if (!cloudinaryUrl) {
       alert("Upload an image first!");
       return;
     }
 
-    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+    const shareablePageUrl = `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
       cloudinaryUrl
+    )}`;
+
+    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      shareablePageUrl
     )}`;
 
     window.open(fbShareUrl, "_blank");
