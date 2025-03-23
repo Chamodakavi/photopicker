@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { Camera, RefreshCw, Download, Upload } from "lucide-react";
 import { Facebook } from "lucide-react";
+import { Box, Typography } from "@mui/material";
+import { relative } from "path";
 
 // Styled Components
 const WebcamContainer = styled.div`
@@ -335,49 +337,85 @@ const WebcamCapture = () => {
   if (!isClient) return null; // Prevents Next.js hydration errors
 
   return (
-    <WebcamContainer>
-      {capturedImage ? (
-        <>
-          <PreviewImg src={capturedImage} />
-          <ButtonContainer>
-            <IconButton onClick={resetState} color="#FF4D4D">
-              <RefreshCw size={28} />
-            </IconButton>
-            <IconButton onClick={saveImage} color="#4CAF50">
-              <Download size={28} />
-            </IconButton>
-            {cloudinaryUrl && (
-              <IconButton
-                onClick={shareOnFacebook}
-                style={{ backgroundColor: "#1877F2" }}
-              >
-                <Facebook size={28} color="white" />
+    <Box>
+      <WebcamContainer>
+        {capturedImage ? (
+          <>
+            <PreviewImg src={capturedImage} />
+            <ButtonContainer>
+              <IconButton onClick={resetState} color="#FF4D4D">
+                <RefreshCw size={28} />
               </IconButton>
-            )}
-          </ButtonContainer>
-        </>
-      ) : (
-        <>
-          <WebcamVideo ref={videoRef} autoPlay muted />
-          <WebcamCanvas ref={canvasRef} />
-          <ButtonContainer>
-            <IconButton onClick={captureImage} color="#007BFF">
-              <Camera size={32} />
-            </IconButton>
-            <label>
-              <FileInput
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-              />
-              <IconButton as="span" color="#6A1B9A">
-                <Upload size={28} />
+              <IconButton onClick={saveImage} color="#4CAF50">
+                <Download size={28} />
               </IconButton>
-            </label>
-          </ButtonContainer>
-        </>
-      )}
-    </WebcamContainer>
+              {cloudinaryUrl && (
+                <IconButton
+                  onClick={shareOnFacebook}
+                  style={{ backgroundColor: "#1877F2" }}
+                >
+                  <Facebook size={28} color="white" />
+                </IconButton>
+              )}
+            </ButtonContainer>
+          </>
+        ) : (
+          <>
+            <WebcamVideo ref={videoRef} autoPlay muted />
+            <WebcamCanvas ref={canvasRef} />
+            <ButtonContainer>
+              <IconButton onClick={captureImage} color="#007BFF">
+                <Camera size={32} />
+              </IconButton>
+              <label>
+                <FileInput
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                />
+                <IconButton as="span" color="#6A1B9A">
+                  <Upload size={28} />
+                </IconButton>
+              </label>
+            </ButtonContainer>
+          </>
+        )}
+      </WebcamContainer>
+      <Box
+        mt={10}
+        p={3}
+        sx={{ backgroundColor: "#f8f9fa", borderRadius: 2, boxShadow: 3 }}
+      >
+        <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>
+          WinMart ත්යාගය ලබා දීම වෙත සාදරයෙන් පිළිගනිමු.
+        </Typography>
+        <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
+          සහභාගී වීමට මෙම පියවර සහ මඟ පෙන්වීම අනුගමනය කරන්න.
+        </Typography>
+        <Box mt={2}>
+          <Typography variant="body1" p={2}>
+            <strong>පියවර 1 :</strong> ඔබගේ ඡායාරූපයක් උඩුගත කර හෝ ග්‍රහණය කර
+            අපගේ පිටුවේ ලාංඡනය එක් කරන්න.
+          </Typography>
+          <Typography variant="body1" p={2}>
+            <strong>පියවර 2 :</strong> රූපය ක්‍රියාවලිය වන තෙක් මඳ වේලාවක් බලා
+            සිටින්න. රූපයේ ක්‍රියාවලියෙන් පසු <strong>Share</strong> බොත්තම
+            දිස්වනු ඇත.
+          </Typography>
+          <Typography variant="body1" p={2}>
+            <strong>පියවර 3 :</strong> <strong>Share</strong> බොත්තම ක්ලික්
+            කරන්න. එය ෆේස්බුක් වෙත ඔබව යොමු කරනු ඇත.
+          </Typography>
+          <Typography variant="body1" p={2}>
+            <strong>පියවර 4 :</strong> ඔබේ ඡායාරූපය ෆේස්බුක් හි උඩුගත කර අපගේ
+            පිටුවට
+            <strong>Tag</strong> කරන්න. <br /> (අපගේ ෆේස්බුක් පිටුවට{" "}
+            <strong>Like</strong>
+            කර අනිවාර්ය වේ.)
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
