@@ -331,25 +331,7 @@ const WebcamCapture = () => {
       shareablePageUrl
     )}`;
 
-    const fbAppUrl = `fb://facewebmodal/f?href=${encodeURIComponent(
-      shareablePageUrl
-    )}`;
-
-    // Detect if the user is on iOS
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
-
-    if (isIOS) {
-      // Try to open Facebook app
-      window.location.href = fbAppUrl;
-      // If the app doesn't open, fallback to browser after 1 second
-      setTimeout(() => {
-        window.open(fbShareUrl, "_blank");
-      }, 1000);
-    } else {
-      // Default behavior for Android and desktop
-      window.open(fbShareUrl, "_blank");
-    }
+    window.open(fbShareUrl, "_blank");
   };
 
   if (!isClient) return null; // Prevents Next.js hydration errors
