@@ -413,11 +413,6 @@ const WebcamCapture = () => {
             <strong>Like</strong>
             කර අනිවාර්ය වේ.)
           </Typography>
-          <Typography color="red">
-            [ ඔබ අයිෆෝන් පරිශීලකයෙකු නම්, ඡායාරූපයක් උඩුගත කර අපගේ ලාංඡනය සමඟ
-            ඡායාරූපය බාගත කරන්න. ඉන්පසු එය ෆේස්බුක් හි උඩුගත කර අපගේ පිටුව ටැග්
-            කරන්න. ]
-          </Typography>
         </Box>
       </Box>
     </Box>
