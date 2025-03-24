@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { Camera, RefreshCw, Download, Upload } from "lucide-react";
-import { Facebook } from "lucide-react";
+// import { Facebook } from "lucide-react";
 import { Box, Typography } from "@mui/material";
-import { relative } from "path";
+// import { relative } from "path";
 
 // Styled Components
 const WebcamContainer = styled.div`
@@ -199,7 +199,7 @@ const WebcamCapture = () => {
         // Save the final image
         const imageDataUrl = canvas.toDataURL("image/jpeg");
         setCapturedImage(imageDataUrl);
-        uploadToCloudinary(imageDataUrl);
+        // uploadToCloudinary(imageDataUrl);
       };
 
       template.onerror = () => {
@@ -278,7 +278,7 @@ const WebcamCapture = () => {
             // Save final image
             const imageDataUrl = canvas.toDataURL("image/png");
             setCapturedImage(canvas.toDataURL("image/png"));
-            uploadToCloudinary(imageDataUrl);
+            //uploadToCloudinary(imageDataUrl);
           };
 
           template.onerror = () => {
@@ -291,48 +291,48 @@ const WebcamCapture = () => {
     }
   };
 
-  const uploadToCloudinary = async (imageDataUrl: string | Blob) => {
-    const cloudName = "drcnnul87";
-    const uploadPreset = "winmart";
+  // const uploadToCloudinary = async (imageDataUrl: string | Blob) => {
+  //   const cloudName = "drcnnul87";
+  //   const uploadPreset = "winmart";
 
-    try {
-      const formData = new FormData();
-      formData.append("file", imageDataUrl);
-      formData.append("upload_preset", uploadPreset);
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("file", imageDataUrl);
+  //     formData.append("upload_preset", uploadPreset);
 
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+  //     const response = await fetch(
+  //       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+  //       {
+  //         method: "POST",
+  //         body: formData,
+  //       }
+  //     );
 
-      const data = await response.json();
-      console.log("Uploaded Image URL:", data.secure_url);
-      setCloudinaryUrl(data.secure_url);
-      alert(`Image uploaded successfully!\nURL: ${data.secure_url}`);
-    } catch (error) {
-      console.error("Error uploading to Cloudinary", error);
-    }
-  };
+  //     const data = await response.json();
+  //     console.log("Uploaded Image URL:", data.secure_url);
+  //     setCloudinaryUrl(data.secure_url);
+  //     alert(`Image uploaded successfully!\nURL: ${data.secure_url}`);
+  //   } catch (error) {
+  //     console.error("Error uploading to Cloudinary", error);
+  //   }
+  // };
 
-  const shareOnFacebook = () => {
-    if (!cloudinaryUrl) {
-      alert("Upload an image first!");
-      return;
-    }
+  // const shareOnFacebook = () => {
+  //   if (!cloudinaryUrl) {
+  //     alert("Upload an image first!");
+  //     return;
+  //   }
 
-    const shareablePageUrl = `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
-      cloudinaryUrl
-    )}`;
+  //   const shareablePageUrl = `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
+  //     cloudinaryUrl
+  //   )}`;
 
-    const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-      shareablePageUrl
-    )}`;
+  //   const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+  //     shareablePageUrl
+  //   )}`;
 
-    window.open(fbShareUrl, "_blank");
-  };
+  //   window.open(fbShareUrl, "_blank");
+  // };
 
   if (!isClient) return null; // Prevents Next.js hydration errors
 
@@ -349,14 +349,14 @@ const WebcamCapture = () => {
               <IconButton onClick={saveImage} color="#4CAF50">
                 <Download size={28} />
               </IconButton>
-              {cloudinaryUrl && (
+              {/* {cloudinaryUrl && (
                 <IconButton
                   onClick={shareOnFacebook}
                   style={{ backgroundColor: "#1877F2" }}
                 >
                   <Facebook size={28} color="white" />
                 </IconButton>
-              )}
+              )} */}
             </ButtonContainer>
           </>
         ) : (
