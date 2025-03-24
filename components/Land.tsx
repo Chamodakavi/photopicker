@@ -387,31 +387,30 @@ const WebcamCapture = () => {
         sx={{ backgroundColor: "#f8f9fa", borderRadius: 2, boxShadow: 3 }}
       >
         <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>
-          WinMart ත්යාගය ලබා දීම වෙත සාදරයෙන් පිළිගනිමු.
+          WinMart ත්‍යාග ලබා දීම වෙත සාදරයෙන් පිළිගනිමු.
         </Typography>
         <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
           සහභාගී වීමට මෙම පියවර සහ මඟ පෙන්වීම අනුගමනය කරන්න.
         </Typography>
         <Box mt={2}>
           <Typography variant="body1" p={2}>
-            <strong>පියවර 1 :</strong> ඔබගේ ඡායාරූපයක් උඩුගත කර හෝ ග්‍රහණය කර
-            අපගේ පිටුවේ ලාංඡනය එක් කරන්න.
+            <strong>පියවර 1 :</strong> ඔබගේ ඡායාරූපයක් උඩුගත(Upload) කර හෝ
+            ග්‍රහණය(Capture) කර අපගේ පිටුවේ ලාංඡනය එක් කරන්න.
           </Typography>
           <Typography variant="body1" p={2}>
-            <strong>පියවර 2 :</strong> රූපය ක්‍රියාවලිය වන තෙක් මඳ වේලාවක් බලා
-            සිටින්න. රූපයේ ක්‍රියාවලියෙන් පසු <strong>Share</strong> බොත්තම
-            දිස්වනු ඇත.
+            <strong>පියවර 2 :</strong> රූපය ක්‍රියාවලිය(Process) වන තෙක් මඳ
+            වේලාවක් බලා සිටින්න.
           </Typography>
           <Typography variant="body1" p={2}>
-            <strong>පියවර 3 :</strong> <strong>Share</strong> බොත්තම ක්ලික්
-            කරන්න. එය ෆේස්බුක් වෙත ඔබව යොමු කරනු ඇත.
+            <strong>පියවර 3 :</strong> ඉන්පසු එම රූපය <strong>Download</strong>{" "}
+            කරගන්න.
           </Typography>
           <Typography variant="body1" p={2}>
-            <strong>පියවර 4 :</strong> ඔබේ ඡායාරූපය ෆේස්බුක් හි උඩුගත කර අපගේ
-            පිටුවට
-            <strong>Tag</strong> කරන්න. <br /> (අපගේ ෆේස්බුක් පිටුවට{" "}
-            <strong>Like</strong>
-            කර අනිවාර්ය වේ.)
+            <strong>පියවර 4 :</strong> <strong>Download</strong> කරගත් රූපය අපගේ
+            WinMart පේජය ටැග් කර facebook මත පළ කරන්න. <br />
+            <strong style={{ color: "red" }}>
+              (අපගේ ෆේස්බුක් පිටුවට <strong>Like</strong> කර තිබීම අනිවාර්ය වේ.)
+            </strong>
           </Typography>
         </Box>
       </Box>
