@@ -104,7 +104,7 @@ const WebcamCapture = () => {
   const [isClient, setIsClient] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const overlayImage = "/art2.png"; // Your 1080x1920 overlay PNG
+  const overlayImage = "/art3.png"; // Your 1080x1920 overlay PNG
   const OUTPUT_WIDTH = 1080;
   const OUTPUT_HEIGHT = 1920;
 
