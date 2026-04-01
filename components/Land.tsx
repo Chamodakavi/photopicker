@@ -1,15 +1,26 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import styled from "styled-components";
-import { Camera, RefreshCw, Download, Upload } from "lucide-react";
+import styled, { keyframes } from "styled-components";
+import { Camera, RefreshCw, Download, Upload, Loader2 } from "lucide-react";
 import { Box, Typography } from "@mui/material";
 
-// Styled Components
+// Animations & Styled Components
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const SpinningIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ${spin} 1s linear infinite;
+`;
+
 const WebcamContainer = styled.div<{ $isCaptured: boolean }>`
   position: relative;
   width: 100%;
-  /* Make it 280px wide when live, 400px wide when viewing the final result */
   max-width: ${(props) => (props.$isCaptured ? "400px" : "280px")};
   margin: 0 auto;
   display: flex;
@@ -54,8 +65,8 @@ const ButtonContainer = styled.div`
   border-radius: 30px;
 `;
 
-const IconButton = styled.button`
-  background-color: #007bff;
+const IconButton = styled.button<{ disabled?: boolean }>`
+  background-color: ${(props) => (props.disabled ? "#6c757d" : "#007bff")};
   color: white;
   border: none;
   border-radius: 50%;
@@ -65,16 +76,16 @@ const IconButton = styled.button`
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  cursor: pointer;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: #339dff;
+    background-color: ${(props) => (props.disabled ? "#6c757d" : "#339dff")};
   }
 
   &:active {
-    transform: scale(0.9);
+    transform: ${(props) => (props.disabled ? "none" : "scale(0.9)")};
   }
 `;
 
@@ -86,18 +97,27 @@ const WebcamCapture = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  // Use a ref to strictly track the stream for cleanup purposes
+  const streamRef = useRef<MediaStream | null>(null);
+
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const overlayImage = "/art.png"; // Your 1080x1920 overlay PNG
-
   const OUTPUT_WIDTH = 1080;
   const OUTPUT_HEIGHT = 1920;
 
   useEffect(() => {
     setIsClient(true);
     checkPermissionsAndStart();
+
+    // 1. MEMORY LEAK FIX: Cleanup function runs when component unmounts
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
   }, []);
 
   const checkPermissionsAndStart = async () => {
@@ -135,7 +155,7 @@ const WebcamCapture = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-        setMediaStream(stream);
+        streamRef.current = stream; // Save to ref for cleanup
       } catch (error) {
         console.error("Error accessing webcam", error);
       }
@@ -145,15 +165,16 @@ const WebcamCapture = () => {
   };
 
   const stopWebcam = () => {
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop());
-      setMediaStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
   };
 
-  // --- FIX APPLIED HERE (CAMERA CAPTURE) ---
   const captureImage = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || isProcessing) return;
+
+    setIsProcessing(true); // 2. Start processing state
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -194,7 +215,18 @@ const WebcamCapture = () => {
         const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
         setCapturedImage(imageDataUrl);
         stopWebcam();
+        setIsProcessing(false); // End processing state
       };
+
+      template.onerror = () => {
+        // 3. User-facing error handling
+        alert(
+          "සමාවන්න, අන්තර්ජාල සම්බන්ධතාවයේ දෝෂයක්. කරුණාකර පිටුව Refresh කරන්න.",
+        );
+        setIsProcessing(false);
+      };
+    } else {
+      setIsProcessing(false);
     }
   };
 
@@ -214,10 +246,11 @@ const WebcamCapture = () => {
     }
   };
 
-  // --- FIX APPLIED HERE (FILE UPLOAD) ---
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && canvasRef.current) {
+    if (file && canvasRef.current && !isProcessing) {
+      setIsProcessing(true); // 2. Start processing state
+
       const reader = new FileReader();
       const canvas = canvasRef.current;
       const context = canvas.getContext("2d");
@@ -227,7 +260,10 @@ const WebcamCapture = () => {
         uploadedImage.src = reader.result as string;
 
         uploadedImage.onload = () => {
-          if (!context) return;
+          if (!context) {
+            setIsProcessing(false);
+            return;
+          }
 
           const template = new Image();
           template.src = overlayImage;
@@ -244,7 +280,7 @@ const WebcamCapture = () => {
             const imgWidth = uploadedImage.width * scale;
             const imgHeight = uploadedImage.height * scale;
 
-            // Center image (NO flipping for file uploads!)
+            // Center image (NO flipping for file uploads)
             const imgX = (OUTPUT_WIDTH - imgWidth) / 2;
             const imgY = (OUTPUT_HEIGHT - imgHeight) / 2;
             context.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
@@ -255,9 +291,24 @@ const WebcamCapture = () => {
             const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
             setCapturedImage(imageDataUrl);
             stopWebcam();
+            setIsProcessing(false); // End processing state
+          };
+
+          template.onerror = () => {
+            // 3. User-facing error handling
+            alert(
+              "සමාවන්න, අන්තර්ජාල සම්බන්ධතාවයේ දෝෂයක්. කරුණාකර පිටුව Refresh කරන්න.",
+            );
+            setIsProcessing(false);
           };
         };
       };
+
+      reader.onerror = () => {
+        alert("ෆොටෝ එක ලබාගැනීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.");
+        setIsProcessing(false);
+      };
+
       reader.readAsDataURL(file);
     }
   };
@@ -284,17 +335,41 @@ const WebcamCapture = () => {
             <WebcamVideo ref={videoRef} autoPlay muted playsInline />
             <WebcamCanvas ref={canvasRef} />
             <ButtonContainer>
-              <IconButton onClick={captureImage} color="#007BFF">
-                <Camera size={32} />
+              <IconButton
+                onClick={captureImage}
+                color="#007BFF"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <SpinningIcon>
+                    <Loader2 size={32} />
+                  </SpinningIcon>
+                ) : (
+                  <Camera size={32} />
+                )}
               </IconButton>
               <label>
                 <FileInput
                   type="file"
                   accept="image/*"
                   onChange={handleFileUpload}
+                  disabled={isProcessing}
                 />
-                <IconButton as="span" color="#6A1B9A">
-                  <Upload size={28} />
+                <IconButton
+                  as="span"
+                  color="#6A1B9A"
+                  disabled={isProcessing}
+                  style={{
+                    backgroundColor: isProcessing ? "#6c757d" : "#6A1B9A",
+                  }}
+                >
+                  {isProcessing ? (
+                    <SpinningIcon>
+                      <Loader2 size={28} />
+                    </SpinningIcon>
+                  ) : (
+                    <Upload size={28} />
+                  )}
                 </IconButton>
               </label>
             </ButtonContainer>
