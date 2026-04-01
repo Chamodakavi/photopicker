@@ -3,9 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { Camera, RefreshCw, Download, Upload } from "lucide-react";
-// import { Facebook } from "lucide-react";
 import { Box, Typography } from "@mui/material";
-// import { relative } from "path";
 
 // Styled Components
 const WebcamContainer = styled.div`
@@ -19,10 +17,13 @@ const WebcamContainer = styled.div`
   overflow: hidden;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background-color: #000;
 `;
 
 const WebcamVideo = styled.video`
   width: 100%;
+  /* Set an aspect ratio that closely mimics a mobile portrait view */
+  aspect-ratio: 9/16;
   border-radius: 12px;
   transform: scaleX(-1);
   object-fit: cover;
@@ -30,8 +31,10 @@ const WebcamVideo = styled.video`
 
 const PreviewImg = styled.img`
   width: 100%;
+  aspect-ratio: 9/16;
   border-radius: 12px;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: #fff;
 `;
 
 const WebcamCanvas = styled.canvas`
@@ -85,9 +88,12 @@ const WebcamCapture = () => {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [cloudinaryUrl, setCloudinaryUrl] = useState<string | null>(null);
 
-  const overlayImage = "/art.png"; // Change this path to your overlay PNG
+  const overlayImage = "/art.png"; // Your 1080x1920 overlay PNG
+
+  // Standard Output Dimensions based on your art.png
+  const OUTPUT_WIDTH = 1080;
+  const OUTPUT_HEIGHT = 1920;
 
   useEffect(() => {
     setIsClient(true);
@@ -105,7 +111,7 @@ const WebcamCapture = () => {
           "Camera access is blocked. Enable it in browser settings:\n\n" +
             "1️⃣ Go to Browser-Settings > Site settings > Camera > allow photopicker-three.vercel.app\n" +
             "2️⃣ Reload this page and try again.\n" +
-            "Else Upload your Photo and Download it."
+            "Else Upload your Photo and Download it.",
         );
         return;
       }
@@ -115,6 +121,7 @@ const WebcamCapture = () => {
       console.error("Error checking permissions", error);
     }
   };
+
   const startWebcam = async () => {
     if (
       typeof navigator !== "undefined" &&
@@ -153,53 +160,42 @@ const WebcamCapture = () => {
 
     if (context && video.videoWidth && video.videoHeight) {
       const template = new Image();
-      template.src = overlayImage; // PNG template with logo at the bottom
+      template.src = overlayImage;
 
       template.onload = () => {
-        if (!context) return;
+        // 1. Set fixed high-res canvas size (1080x1920)
+        canvas.width = OUTPUT_WIDTH;
+        canvas.height = OUTPUT_HEIGHT;
 
-        const templateWidth = template.width;
-        const templateHeight = template.height;
-
-        // Resize canvas to match the template size
-        canvas.width = templateWidth;
-        canvas.height = templateHeight;
-
-        // Define available space for the captured image
-        const availableHeight = templateHeight * 0.75; // Space above the logo
-        const availableWidth = templateWidth;
-
-        // Maintain aspect ratio
-        const aspectRatio = video.videoWidth / video.videoHeight;
-        let imgWidth = availableWidth;
-        let imgHeight = imgWidth / aspectRatio;
-
-        if (imgHeight > availableHeight) {
-          imgHeight = availableHeight;
-          imgWidth = imgHeight * aspectRatio;
-        }
-
-        // Center the image within the available space
-        const imgX = (templateWidth - imgWidth) / 2;
-        const imgY = 0; // Start from the top of the template
-
-        // Clear the canvas before drawing
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Flip and draw the captured video frame
+        // 2. Calculate "Cover" logic so the video fills the 1080x1920 canvas
+        const scale = Math.max(
+          OUTPUT_WIDTH / video.videoWidth,
+          OUTPUT_HEIGHT / video.videoHeight,
+        );
+        const imgWidth = video.videoWidth * scale;
+        const imgHeight = video.videoHeight * scale;
+
+        // Center the video
+        const imgX = (OUTPUT_WIDTH - imgWidth) / 2;
+        const imgY = (OUTPUT_HEIGHT - imgHeight) / 2;
+
+        // 3. Draw and flip the video frame
         context.save();
-        context.translate(imgWidth, 0); // Move right by image width
+        context.translate(OUTPUT_WIDTH, 0); // Move to right edge
         context.scale(-1, 1); // Flip horizontally
+        // Because we flipped the canvas, we need to adjust the X coordinate drawing
         context.drawImage(video, -imgX, imgY, imgWidth, imgHeight);
         context.restore();
 
-        // Draw the template (logo at bottom)
-        context.drawImage(template, 0, 0, templateWidth, templateHeight);
+        // 4. Draw the template over the whole thing
+        context.drawImage(template, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
-        // Save the final image
-        const imageDataUrl = canvas.toDataURL("image/jpeg");
+        // Save the final image as JPEG for better performance
+        const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
         setCapturedImage(imageDataUrl);
-        // uploadToCloudinary(imageDataUrl);
+        stopWebcam();
       };
 
       template.onerror = () => {
@@ -217,7 +213,7 @@ const WebcamCapture = () => {
     if (capturedImage) {
       const link = document.createElement("a");
       link.href = capturedImage;
-      link.download = "captured_image.jpg";
+      link.download = "winmart-capture.jpg";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -239,46 +235,37 @@ const WebcamCapture = () => {
           if (!context) return;
 
           const template = new Image();
-          template.src = overlayImage; // Your PNG template (Winmart logo at the bottom)
+          template.src = overlayImage;
 
           template.onload = () => {
-            if (!context) return;
+            // 1. Set fixed high-res canvas size (1080x1920)
+            canvas.width = OUTPUT_WIDTH;
+            canvas.height = OUTPUT_HEIGHT;
 
-            const templateWidth = template.width;
-            const templateHeight = template.height;
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Resize canvas to match the template
-            canvas.width = templateWidth;
-            canvas.height = templateHeight;
+            // 2. Calculate "Cover" logic so the uploaded image fills the canvas
+            const scale = Math.max(
+              OUTPUT_WIDTH / uploadedImage.width,
+              OUTPUT_HEIGHT / uploadedImage.height,
+            );
+            const imgWidth = uploadedImage.width * scale;
+            const imgHeight = uploadedImage.height * scale;
 
-            // Define space for uploaded image (above the logo)
-            const availableHeight = templateHeight * 0.75; // Adjust based on your template
-            const availableWidth = templateWidth;
+            // Center the image
+            const imgX = (OUTPUT_WIDTH - imgWidth) / 2;
+            const imgY = (OUTPUT_HEIGHT - imgHeight) / 2;
 
-            // Maintain aspect ratio of uploaded image
-            const aspectRatio = uploadedImage.width / uploadedImage.height;
-            let imgWidth = availableWidth;
-            let imgHeight = imgWidth / aspectRatio;
-
-            if (imgHeight > availableHeight) {
-              imgHeight = availableHeight;
-              imgWidth = imgHeight * aspectRatio;
-            }
-
-            // Position uploaded image inside the empty space
-            const imgX = (templateWidth - imgWidth) / 2;
-            const imgY = 0; // Start from top of template
-
-            // Draw uploaded image inside the empty space
+            // 3. Draw the user's uploaded image (No need to flip uploaded photos)
             context.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
 
-            // Draw the template (Winmart logo at the bottom)
-            context.drawImage(template, 0, 0, templateWidth, templateHeight);
+            // 4. Draw the template overlay
+            context.drawImage(template, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
-            // Save final image
-            const imageDataUrl = canvas.toDataURL("image/png");
-            setCapturedImage(canvas.toDataURL("image/png"));
-            //uploadToCloudinary(imageDataUrl);
+            // Save final image as JPEG
+            const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+            setCapturedImage(imageDataUrl);
+            stopWebcam();
           };
 
           template.onerror = () => {
@@ -291,57 +278,14 @@ const WebcamCapture = () => {
     }
   };
 
-  // const uploadToCloudinary = async (imageDataUrl: string | Blob) => {
-  //   const cloudName = "drcnnul87";
-  //   const uploadPreset = "winmart";
-
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("file", imageDataUrl);
-  //     formData.append("upload_preset", uploadPreset);
-
-  //     const response = await fetch(
-  //       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-  //       {
-  //         method: "POST",
-  //         body: formData,
-  //       }
-  //     );
-
-  //     const data = await response.json();
-  //     console.log("Uploaded Image URL:", data.secure_url);
-  //     setCloudinaryUrl(data.secure_url);
-  //     alert(`Image uploaded successfully!\nURL: ${data.secure_url}`);
-  //   } catch (error) {
-  //     console.error("Error uploading to Cloudinary", error);
-  //   }
-  // };
-
-  // const shareOnFacebook = () => {
-  //   if (!cloudinaryUrl) {
-  //     alert("Upload an image first!");
-  //     return;
-  //   }
-
-  //   const shareablePageUrl = `https://photopicker-three.vercel.app/share?img=${encodeURIComponent(
-  //     cloudinaryUrl
-  //   )}`;
-
-  //   const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-  //     shareablePageUrl
-  //   )}`;
-
-  //   window.open(fbShareUrl, "_blank");
-  // };
-
-  if (!isClient) return null; // Prevents Next.js hydration errors
+  if (!isClient) return null;
 
   return (
     <Box>
       <WebcamContainer>
         {capturedImage ? (
           <>
-            <PreviewImg src={capturedImage} />
+            <PreviewImg src={capturedImage} alt="Captured preview" />
             <ButtonContainer>
               <IconButton onClick={resetState} color="#FF4D4D">
                 <RefreshCw size={28} />
@@ -349,19 +293,11 @@ const WebcamCapture = () => {
               <IconButton onClick={saveImage} color="#4CAF50">
                 <Download size={28} />
               </IconButton>
-              {/* {cloudinaryUrl && (
-                <IconButton
-                  onClick={shareOnFacebook}
-                  style={{ backgroundColor: "#1877F2" }}
-                >
-                  <Facebook size={28} color="white" />
-                </IconButton>
-              )} */}
             </ButtonContainer>
           </>
         ) : (
           <>
-            <WebcamVideo ref={videoRef} autoPlay muted />
+            <WebcamVideo ref={videoRef} autoPlay muted playsInline />
             <WebcamCanvas ref={canvasRef} />
             <ButtonContainer>
               <IconButton onClick={captureImage} color="#007BFF">
