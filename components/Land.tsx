@@ -112,11 +112,33 @@ const WebcamCapture = () => {
     setIsClient(true);
     checkPermissionsAndStart();
 
-    // 1. MEMORY LEAK FIX: Cleanup function runs when component unmounts
+    // 🛡️ SECURITY: Disable Right-Click and DevTools Shortcuts
+    const handleKey = (e: KeyboardEvent) => {
+      if (
+        e.key === "F12" ||
+        ((e.ctrlKey || e.metaKey) &&
+          e.shiftKey &&
+          (e.key === "I" || e.key === "J")) ||
+        ((e.ctrlKey || e.metaKey) && e.key === "u")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    const handleContext = (e: MouseEvent) => e.preventDefault();
+
+    window.addEventListener("keydown", handleKey);
+    window.addEventListener("contextmenu", handleContext);
+
+    // 🧹 CLEANUP: Runs when component unmounts
     return () => {
+      // Stop Camera
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
+      // Remove Security Listeners
+      window.removeEventListener("keydown", handleKey);
+      window.removeEventListener("contextmenu", handleContext);
     };
   }, []);
 
@@ -316,7 +338,7 @@ const WebcamCapture = () => {
   if (!isClient) return null;
 
   return (
-    <Box>
+    <Box onContextMenu={(e) => e.preventDefault()}>
       <WebcamContainer $isCaptured={!!capturedImage}>
         {capturedImage ? (
           <>
