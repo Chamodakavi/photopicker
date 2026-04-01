@@ -6,10 +6,11 @@ import { Camera, RefreshCw, Download, Upload } from "lucide-react";
 import { Box, Typography } from "@mui/material";
 
 // Styled Components
-const WebcamContainer = styled.div`
+const WebcamContainer = styled.div<{ $isCaptured: boolean }>`
   position: relative;
   width: 100%;
-  max-width: 400px;
+  /* Make it 280px wide when live, 400px wide when viewing the final result */
+  max-width: ${(props) => (props.$isCaptured ? "400px" : "280px")};
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -18,11 +19,11 @@ const WebcamContainer = styled.div`
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   background-color: #000;
+  transition: max-width 0.4s ease-in-out;
 `;
 
 const WebcamVideo = styled.video`
   width: 100%;
-  /* Set an aspect ratio that closely mimics a mobile portrait view */
   aspect-ratio: 9/16;
   border-radius: 12px;
   transform: scaleX(-1);
@@ -91,7 +92,6 @@ const WebcamCapture = () => {
 
   const overlayImage = "/art.png"; // Your 1080x1920 overlay PNG
 
-  // Standard Output Dimensions based on your art.png
   const OUTPUT_WIDTH = 1080;
   const OUTPUT_HEIGHT = 1920;
 
@@ -151,6 +151,7 @@ const WebcamCapture = () => {
     }
   };
 
+  // --- FIX APPLIED HERE (CAMERA CAPTURE) ---
   const captureImage = async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -163,13 +164,10 @@ const WebcamCapture = () => {
       template.src = overlayImage;
 
       template.onload = () => {
-        // 1. Set fixed high-res canvas size (1080x1920)
         canvas.width = OUTPUT_WIDTH;
         canvas.height = OUTPUT_HEIGHT;
-
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 2. Calculate "Cover" logic so the video fills the 1080x1920 canvas
         const scale = Math.max(
           OUTPUT_WIDTH / video.videoWidth,
           OUTPUT_HEIGHT / video.videoHeight,
@@ -177,29 +175,25 @@ const WebcamCapture = () => {
         const imgWidth = video.videoWidth * scale;
         const imgHeight = video.videoHeight * scale;
 
-        // Center the video
-        const imgX = (OUTPUT_WIDTH - imgWidth) / 2;
-        const imgY = (OUTPUT_HEIGHT - imgHeight) / 2;
-
-        // 3. Draw and flip the video frame
+        // Correct Mirror Flip Logic for Webcam
         context.save();
-        context.translate(OUTPUT_WIDTH, 0); // Move to right edge
-        context.scale(-1, 1); // Flip horizontally
-        // Because we flipped the canvas, we need to adjust the X coordinate drawing
-        context.drawImage(video, -imgX, imgY, imgWidth, imgHeight);
+        context.translate(OUTPUT_WIDTH / 2, OUTPUT_HEIGHT / 2);
+        context.scale(-1, 1);
+        context.drawImage(
+          video,
+          -imgWidth / 2,
+          -imgHeight / 2,
+          imgWidth,
+          imgHeight,
+        );
         context.restore();
 
-        // 4. Draw the template over the whole thing
+        // Draw Template
         context.drawImage(template, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
-        // Save the final image as JPEG for better performance
         const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
         setCapturedImage(imageDataUrl);
         stopWebcam();
-      };
-
-      template.onerror = () => {
-        console.error("Failed to load template image.");
       };
     }
   };
@@ -220,6 +214,7 @@ const WebcamCapture = () => {
     }
   };
 
+  // --- FIX APPLIED HERE (FILE UPLOAD) ---
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && canvasRef.current) {
@@ -238,13 +233,10 @@ const WebcamCapture = () => {
           template.src = overlayImage;
 
           template.onload = () => {
-            // 1. Set fixed high-res canvas size (1080x1920)
             canvas.width = OUTPUT_WIDTH;
             canvas.height = OUTPUT_HEIGHT;
-
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 2. Calculate "Cover" logic so the uploaded image fills the canvas
             const scale = Math.max(
               OUTPUT_WIDTH / uploadedImage.width,
               OUTPUT_HEIGHT / uploadedImage.height,
@@ -252,28 +244,20 @@ const WebcamCapture = () => {
             const imgWidth = uploadedImage.width * scale;
             const imgHeight = uploadedImage.height * scale;
 
-            // Center the image
+            // Center image (NO flipping for file uploads!)
             const imgX = (OUTPUT_WIDTH - imgWidth) / 2;
             const imgY = (OUTPUT_HEIGHT - imgHeight) / 2;
-
-            // 3. Draw the user's uploaded image (No need to flip uploaded photos)
             context.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
 
-            // 4. Draw the template overlay
+            // Draw Template
             context.drawImage(template, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
-            // Save final image as JPEG
             const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
             setCapturedImage(imageDataUrl);
             stopWebcam();
           };
-
-          template.onerror = () => {
-            console.error("Failed to load template image.");
-          };
         };
       };
-
       reader.readAsDataURL(file);
     }
   };
@@ -282,7 +266,7 @@ const WebcamCapture = () => {
 
   return (
     <Box>
-      <WebcamContainer>
+      <WebcamContainer $isCaptured={!!capturedImage}>
         {capturedImage ? (
           <>
             <PreviewImg src={capturedImage} alt="Captured preview" />
